@@ -5,10 +5,18 @@ Edit these values before running generate.py.
 
 import os
 
-# ── OpenAI ────────────────────────────────────────────────────────────────────
-OPENAI_API_KEY: str = os.environ.get("OPENAI_API_KEY", "sk-YOUR_KEY_HERE")
-OPENAI_MODEL:   str = "gpt-4o-mini"          # cheap + fast; swap to gpt-4o for quality
-OPENAI_TIMEOUT: int = 60                      # seconds per request
+# ── Groq via OpenAI-compatible API ────────────────────────────────────────────
+# IMPORTANT:
+# - We still use OpenAI SDK in code
+# - But we point it to Groq using base_url (set in client)
+# - So we store GROQ_API_KEY instead of OPENAI_API_KEY
+
+OPENAI_API_KEY: str = os.environ.get("GROQ_API_KEY", "gsk-YOUR_KEY_HERE")
+
+OPENAI_MODEL:   str = "openai/gpt-oss-20b"   # best quality
+# OPENAI_MODEL: str = "llama-3.1-8b-instant"      # faster + cheaper alternative
+
+OPENAI_TIMEOUT: int = 60                          # seconds per request
 
 # ── Data source ───────────────────────────────────────────────────────────────
 HF_SOURCE_DATASET: str = "wikitablequestions" # loaded from HuggingFace Hub

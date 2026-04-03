@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 class PerturbedTable:
     source_table_id:    str
     anomaly_category:   str
-    anomaly_description: str          # GPT's explanation of what it changed
+    anomaly_description: str
     original_csv:       str
     corrupted_csv:      str
     corrupted_header:   list[str]
@@ -105,7 +105,12 @@ Schema:
 # ── OpenAI client ─────────────────────────────────────────────────────────────
 
 def _make_client() -> OpenAI:
-    return OpenAI(api_key=OPENAI_API_KEY, timeout=OPENAI_TIMEOUT)
+    # Using OpenAI SDK but pointing to Groq backend
+    return OpenAI(
+        api_key=OPENAI_API_KEY,
+        base_url="https://api.groq.com/openai/v1",  # ✅ ADDED
+        timeout=OPENAI_TIMEOUT,
+    )
 
 
 _client: Optional[OpenAI] = None
@@ -139,14 +144,15 @@ def _call_openai(user_message: str, retries: int = 3) -> str:
                     {"role": "user",   "content": user_message},
                 ],
                 temperature=0.7,
+                max_completion_tokens=1000,  # ✅ CHANGED (Groq requirement)
                 response_format={"type": "json_object"},
             )
             return response.choices[0].message.content.strip()
         except Exception as exc:
-            logger.warning("OpenAI call failed (attempt %d/%d): %s", attempt + 1, retries, exc)
+            logger.warning("LLM call failed (attempt %d/%d): %s", attempt + 1, retries, exc)
             if attempt < retries - 1:
-                time.sleep(2 ** attempt)   # exponential back-off
-    raise RuntimeError("All OpenAI retries exhausted.")
+                time.sleep(2 ** attempt)
+    raise RuntimeError("All retries exhausted.")
 
 
 def _parse_response(raw: str, original_csv: str) -> tuple[str, str]:
